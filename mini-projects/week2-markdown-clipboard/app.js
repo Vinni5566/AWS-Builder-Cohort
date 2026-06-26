@@ -229,11 +229,28 @@ function loadTheme() {
     }
 }
 
+// Save markdown to localStorage
+function saveToLocalStorage() {
+    localStorage.setItem('markdown', markdownInput.value);
+}
+
+// Load markdown from localStorage
+function loadFromLocalStorage() {
+    const savedMarkdown = localStorage.getItem('markdown');
+    if (savedMarkdown) {
+        markdownInput.value = savedMarkdown;
+    }
+}
+
 // Event listeners
-markdownInput.addEventListener('input', updatePreview);
+markdownInput.addEventListener('input', () => {
+    updatePreview();
+    saveToLocalStorage();
+});
 downloadBtn.addEventListener('click', downloadMarkdown);
 themeToggle.addEventListener('click', toggleTheme);
 
 // Initial render
 loadTheme();
+loadFromLocalStorage();
 updatePreview();
