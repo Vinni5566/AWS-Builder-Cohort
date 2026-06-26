@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Clipboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Main container -->
+    <div class="container">
+        <!-- Header section -->
+        <header>
+            <h1>Markdown Clipboard</h1>
+            <p>Write, preview, and download Markdown</p>
+        </header>
+
+        <!-- Editor and preview panels -->
+        <div class="editor-container">
+            <!-- Editor panel with textarea -->
+            <div class="editor-panel">
+                <div class="panel-header">
+                    <h2>Editor</h2>
+                    <button id="downloadBtn" class="btn btn-primary">Download .md</button>
+                </div>
+                <textarea 
+                    id="markdownInput" 
+                    placeholder="Write or paste your Markdown here..."
+                    spellcheck="false"
+                ></textarea>
+            </div>
+
+            <!-- Preview panel -->
+            <div class="preview-panel">
+                <div class="panel-header">
+                    <h2>Preview</h2>
+                </div>
+                <div id="previewOutput"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Built for AWS Builder Cohort - Week 2</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript functionality -->
+    <script src="app.js"></script>
+</body>
+</html>

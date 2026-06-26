@@ -1,0 +1,13 @@
+# AWS config files
+bucket-policy.json
+cloudfront-config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
