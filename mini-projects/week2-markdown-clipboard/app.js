@@ -198,6 +198,9 @@ const lineCount = document.getElementById('lineCount');
 const shortcutsBtn = document.getElementById('shortcutsBtn');
 const shortcutsModal = document.getElementById('shortcutsModal');
 const closeModal = document.getElementById('closeModal');
+const importBtn = document.getElementById('importBtn');
+const clearBtn = document.getElementById('clearBtn');
+const fileInput = document.getElementById('fileInput');
 
 // Update preview on input
 function updatePreview() {
@@ -272,6 +275,36 @@ function closeShortcutsModal() {
     shortcutsModal.classList.remove('active');
 }
 
+// Clear editor
+function clearEditor() {
+    if (markdownInput.value && confirm('Are you sure you want to clear the editor?')) {
+        markdownInput.value = '';
+        updatePreview();
+        updateStats();
+        saveToLocalStorage();
+    }
+}
+
+// Import file
+function importFile() {
+    fileInput.click();
+}
+
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            markdownInput.value = event.target.result;
+            updatePreview();
+            updateStats();
+            saveToLocalStorage();
+        };
+        reader.readAsText(file);
+    }
+    fileInput.value = '';
+});
+
 // Copy HTML to clipboard
 function copyHtmlToClipboard() {
     const html = previewOutput.innerHTML;
@@ -326,6 +359,8 @@ copyHtmlBtn.addEventListener('click', copyHtmlToClipboard);
 exportHtmlBtn.addEventListener('click', exportHtml);
 shortcutsBtn.addEventListener('click', openShortcutsModal);
 closeModal.addEventListener('click', closeShortcutsModal);
+importBtn.addEventListener('click', importFile);
+clearBtn.addEventListener('click', clearEditor);
 
 // Initial render
 loadTheme();
@@ -357,6 +392,12 @@ document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
         toggleTheme();
+    }
+    
+    // Ctrl/Cmd + I: Import file
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+        e.preventDefault();
+        importFile();
     }
     
     // Escape: Close modal

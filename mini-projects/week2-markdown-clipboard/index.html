@@ -24,7 +24,12 @@
             <div class="editor-panel">
                 <div class="panel-header">
                     <h2>Editor</h2>
-                    <button id="downloadBtn" class="btn btn-primary">Download .md</button>
+                    <div class="header-actions">
+                        <input type="file" id="fileInput" accept=".md,.txt" style="display: none;">
+                        <button id="importBtn" class="btn btn-secondary">Import</button>
+                        <button id="clearBtn" class="btn btn-secondary">Clear</button>
+                        <button id="downloadBtn" class="btn btn-primary">Download .md</button>
+                    </div>
                 </div>
                 <textarea 
                     id="markdownInput" 
@@ -68,6 +73,10 @@
                     <div class="shortcut-item">
                         <kbd>Ctrl/Cmd + S</kbd>
                         <span>Download Markdown</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + I</kbd>
+                        <span>Import File</span>
                     </div>
                     <div class="shortcut-item">
                         <kbd>Ctrl/Cmd + Shift + C</kbd>
