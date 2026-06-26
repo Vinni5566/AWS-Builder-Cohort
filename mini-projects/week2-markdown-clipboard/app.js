@@ -188,6 +188,8 @@ const parser = new MarkdownParser();
 const markdownInput = document.getElementById('markdownInput');
 const previewOutput = document.getElementById('previewOutput');
 const downloadBtn = document.getElementById('downloadBtn');
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.querySelector('.theme-icon');
 
 // Update preview on input
 function updatePreview() {
@@ -210,9 +212,28 @@ function downloadMarkdown() {
     URL.revokeObjectURL(url);
 }
 
+// Toggle dark/light mode
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    themeIcon.textContent = isDark ? '☀️' : '🌙';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+// Load saved theme preference
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeIcon.textContent = '☀️';
+    }
+}
+
 // Event listeners
 markdownInput.addEventListener('input', updatePreview);
 downloadBtn.addEventListener('click', downloadMarkdown);
+themeToggle.addEventListener('click', toggleTheme);
 
 // Initial render
+loadTheme();
 updatePreview();

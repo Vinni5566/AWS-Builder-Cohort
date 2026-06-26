@@ -28,6 +28,7 @@ header {
     color: white;
     padding: 30px;
     text-align: center;
+    position: relative;
 }
 
 header h1 {
@@ -38,6 +39,32 @@ header h1 {
 header p {
     font-size: 1.1rem;
     opacity: 0.9;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-icon {
+    font-size: 20px;
 }
 
 /* Editor layout */
@@ -232,4 +259,77 @@ footer {
     header h1 {
         font-size: 1.8rem;
     }
+}
+
+/* Dark mode styles */
+body.dark-mode {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body.dark-mode .container {
+    background: #1e1e2e;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+body.dark-mode .panel-header {
+    background: #2a2a3e;
+    border-bottom: 1px solid #3a3a4e;
+}
+
+body.dark-mode .panel-header h2 {
+    color: #e0e0e0;
+}
+
+body.dark-mode #markdownInput {
+    background: #1a1a2e;
+    color: #e0e0e0;
+}
+
+body.dark-mode #markdownInput:focus {
+    background: #252538;
+}
+
+body.dark-mode #previewOutput {
+    background: #1e1e2e;
+    color: #e0e0e0;
+}
+
+body.dark-mode footer {
+    background: #2a2a3e;
+    color: #a0a0a0;
+    border-top: 1px solid #3a3a4e;
+}
+
+body.dark-mode .editor-panel {
+    border-right: 1px solid #3a3a4e;
+}
+
+body.dark-mode #previewOutput h1,
+body.dark-mode #previewOutput h2 {
+    border-bottom: 1px solid #3a3a4e;
+}
+
+body.dark-mode #previewOutput code {
+    background: #2a2a3e;
+}
+
+body.dark-mode #previewOutput pre {
+    background: #2a2a3e;
+}
+
+body.dark-mode #previewOutput blockquote {
+    border-left: 4px solid #667eea;
+    color: #a0a0a0;
+}
+
+body.dark-mode #previewOutput a {
+    color: #8b9fff;
+}
+
+body.dark-mode #previewOutput hr {
+    border-top: 1px solid #3a3a4e;
 }
