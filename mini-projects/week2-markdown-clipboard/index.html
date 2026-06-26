@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Clipboard</title>
+    <meta name="description" content="The Developer's Markdown Clipboard - Write, preview, and export Markdown instantly. Dark mode, toolbar, find & replace, Zen mode and more.">
+    <title>Markdown Clipboard | Developer's Toolkit</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -30,6 +31,17 @@
                         <button id="clearBtn" class="btn btn-secondary">Clear</button>
                         <button id="downloadBtn" class="btn btn-primary">Download .md</button>
                     </div>
+                </div>
+                <div class="toolbar">
+                    <button class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)">B</button>
+                    <button class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)">I</button>
+                    <button class="toolbar-btn" data-action="heading" title="Heading">H</button>
+                    <button class="toolbar-btn" data-action="link" title="Link">🔗</button>
+                    <button class="toolbar-btn" data-action="image" title="Image">🖼️</button>
+                    <button class="toolbar-btn" data-action="code" title="Code">&lt;/&gt;</button>
+                    <button class="toolbar-btn" data-action="blockquote" title="Blockquote">❝</button>
+                    <button class="toolbar-btn" data-action="list" title="List">≣</button>
+                    <button class="toolbar-btn" data-action="hr" title="Horizontal Rule">—</button>
                 </div>
                 <textarea 
                     id="markdownInput" 
@@ -70,26 +82,15 @@
                     <button id="closeModal" class="btn-close">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="shortcut-item">
-                        <kbd>Ctrl/Cmd + S</kbd>
-                        <span>Download Markdown</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl/Cmd + I</kbd>
-                        <span>Import File</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl/Cmd + Shift + C</kbd>
-                        <span>Copy HTML</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl/Cmd + Shift + E</kbd>
-                        <span>Export HTML</span>
-                    </div>
-                    <div class="shortcut-item">
-                        <kbd>Ctrl/Cmd + D</kbd>
-                        <span>Toggle Dark Mode</span>
-                    </div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + B</kbd><span>Bold</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + I</kbd><span>Italic</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + S</kbd><span>Download Markdown</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + F</kbd><span>Find &amp; Replace</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + Shift + Z</kbd><span>Zen Mode</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + Shift + C</kbd><span>Copy HTML</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + Shift + E</kbd><span>Export HTML</span></div>
+                    <div class="shortcut-item"><kbd>Ctrl/Cmd + D</kbd><span>Toggle Dark Mode</span></div>
+                    <div class="shortcut-item"><kbd>Escape</kbd><span>Close Modal / Exit Zen</span></div>
                 </div>
             </div>
         </div>
