@@ -7,6 +7,11 @@ A fast, single-page static web app for writing, previewing, and downloading Mark
 - Write or paste Markdown text
 - Instant HTML preview
 - Download as .md file
+- Export as HTML file
+- Copy HTML to clipboard
+- Dark/Light mode toggle
+- Auto-save to localStorage
+- Real-time word/character/line count
 - Client-side only (no backend required)
 
 ## Tech Stack
