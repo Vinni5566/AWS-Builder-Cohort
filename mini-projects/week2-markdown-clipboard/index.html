@@ -54,7 +54,36 @@
         <!-- Footer -->
         <footer>
             <p>Built for AWS Builder Cohort - Week 2</p>
+            <button id="shortcutsBtn" class="btn-link">⌨️ Shortcuts</button>
         </footer>
+
+        <!-- Shortcuts modal -->
+        <div id="shortcutsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Keyboard Shortcuts</h3>
+                    <button id="closeModal" class="btn-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + S</kbd>
+                        <span>Download Markdown</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + Shift + C</kbd>
+                        <span>Copy HTML</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + Shift + E</kbd>
+                        <span>Export HTML</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl/Cmd + D</kbd>
+                        <span>Toggle Dark Mode</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript functionality -->

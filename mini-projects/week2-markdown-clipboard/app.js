@@ -195,6 +195,9 @@ const exportHtmlBtn = document.getElementById('exportHtmlBtn');
 const charCount = document.getElementById('charCount');
 const wordCount = document.getElementById('wordCount');
 const lineCount = document.getElementById('lineCount');
+const shortcutsBtn = document.getElementById('shortcutsBtn');
+const shortcutsModal = document.getElementById('shortcutsModal');
+const closeModal = document.getElementById('closeModal');
 
 // Update preview on input
 function updatePreview() {
@@ -260,6 +263,15 @@ function loadFromLocalStorage() {
     }
 }
 
+// Modal functions
+function openShortcutsModal() {
+    shortcutsModal.classList.add('active');
+}
+
+function closeShortcutsModal() {
+    shortcutsModal.classList.remove('active');
+}
+
 // Copy HTML to clipboard
 function copyHtmlToClipboard() {
     const html = previewOutput.innerHTML;
@@ -312,9 +324,50 @@ downloadBtn.addEventListener('click', downloadMarkdown);
 themeToggle.addEventListener('click', toggleTheme);
 copyHtmlBtn.addEventListener('click', copyHtmlToClipboard);
 exportHtmlBtn.addEventListener('click', exportHtml);
+shortcutsBtn.addEventListener('click', openShortcutsModal);
+closeModal.addEventListener('click', closeShortcutsModal);
 
 // Initial render
 loadTheme();
 loadFromLocalStorage();
 updatePreview();
 updateStats();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + S: Download markdown
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        downloadMarkdown();
+    }
+    
+    // Ctrl/Cmd + Shift + C: Copy HTML
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        copyHtmlToClipboard();
+    }
+    
+    // Ctrl/Cmd + Shift + E: Export HTML
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        exportHtml();
+    }
+    
+    // Ctrl/Cmd + D: Toggle dark mode
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        toggleTheme();
+    }
+    
+    // Escape: Close modal
+    if (e.key === 'Escape') {
+        shortcutsModal.classList.remove('active');
+    }
+});
+
+// Close modal when clicking outside
+shortcutsModal.addEventListener('click', (e) => {
+    if (e.target === shortcutsModal) {
+        closeShortcutsModal();
+    }
+});
