@@ -192,12 +192,28 @@ const themeToggle = document.getElementById('themeToggle');
 const themeIcon = document.querySelector('.theme-icon');
 const copyHtmlBtn = document.getElementById('copyHtmlBtn');
 const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+const charCount = document.getElementById('charCount');
+const wordCount = document.getElementById('wordCount');
+const lineCount = document.getElementById('lineCount');
 
 // Update preview on input
 function updatePreview() {
     const markdown = markdownInput.value;
     const html = parser.parse(markdown);
     previewOutput.innerHTML = html;
+    updateStats();
+}
+
+// Update character, word, and line counts
+function updateStats() {
+    const text = markdownInput.value;
+    const chars = text.length;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const lines = text.split('\n').length;
+    
+    charCount.textContent = `${chars} chars`;
+    wordCount.textContent = `${words} words`;
+    lineCount.textContent = `${lines} lines`;
 }
 
 // Download markdown as .md file
@@ -301,3 +317,4 @@ exportHtmlBtn.addEventListener('click', exportHtml);
 loadTheme();
 loadFromLocalStorage();
 updatePreview();
+updateStats();

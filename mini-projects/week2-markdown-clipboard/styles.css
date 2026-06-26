@@ -79,6 +79,7 @@ header p {
 .preview-panel {
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .editor-panel {
@@ -116,10 +117,26 @@ header p {
     line-height: 1.6;
     background: #fafafa;
     outline: none;
+    min-height: 0;
 }
 
 #markdownInput:focus {
     background: #fff;
+}
+
+/* Editor stats bar */
+.editor-stats {
+    background: #f5f5f5;
+    padding: 10px 20px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.editor-stats span {
+    font-family: 'Monaco', 'Menlo', monospace;
 }
 
 /* Preview output */
@@ -128,6 +145,7 @@ header p {
     padding: 20px;
     overflow-y: auto;
     background: white;
+    min-height: 0;
 }
 
 /* Button styles */
@@ -351,4 +369,10 @@ body.dark-mode #previewOutput hr {
 
 body.dark-mode .btn-secondary {
     background: #4a4a5e;
+}
+
+body.dark-mode .editor-stats {
+    background: #2a2a3e;
+    border-top: 1px solid #3a3a4e;
+    color: #a0a0a0;
 }
