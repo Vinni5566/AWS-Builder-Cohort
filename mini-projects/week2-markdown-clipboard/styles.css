@@ -100,6 +100,11 @@ header p {
     color: #333;
 }
 
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
 /* Textarea input */
 #markdownInput {
     flex: 1;
@@ -148,6 +153,16 @@ header p {
 
 .btn-primary:active {
     transform: translateY(0);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
 }
 
 /* Footer */
@@ -332,4 +347,8 @@ body.dark-mode #previewOutput a {
 
 body.dark-mode #previewOutput hr {
     border-top: 1px solid #3a3a4e;
+}
+
+body.dark-mode .btn-secondary {
+    background: #4a4a5e;
 }

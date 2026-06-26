@@ -190,6 +190,8 @@ const previewOutput = document.getElementById('previewOutput');
 const downloadBtn = document.getElementById('downloadBtn');
 const themeToggle = document.getElementById('themeToggle');
 const themeIcon = document.querySelector('.theme-icon');
+const copyHtmlBtn = document.getElementById('copyHtmlBtn');
+const exportHtmlBtn = document.getElementById('exportHtmlBtn');
 
 // Update preview on input
 function updatePreview() {
@@ -242,6 +244,49 @@ function loadFromLocalStorage() {
     }
 }
 
+// Copy HTML to clipboard
+function copyHtmlToClipboard() {
+    const html = previewOutput.innerHTML;
+    navigator.clipboard.writeText(html).then(() => {
+        const originalText = copyHtmlBtn.textContent;
+        copyHtmlBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyHtmlBtn.textContent = originalText;
+        }, 2000);
+    });
+}
+
+// Export as HTML file
+function exportHtml() {
+    const html = previewOutput.innerHTML;
+    const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exported Markdown</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+        blockquote { border-left: 4px solid #667eea; padding-left: 15px; color: #666; }
+    </style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+    const blob = new Blob([fullHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'exported.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 // Event listeners
 markdownInput.addEventListener('input', () => {
     updatePreview();
@@ -249,6 +294,8 @@ markdownInput.addEventListener('input', () => {
 });
 downloadBtn.addEventListener('click', downloadMarkdown);
 themeToggle.addEventListener('click', toggleTheme);
+copyHtmlBtn.addEventListener('click', copyHtmlToClipboard);
+exportHtmlBtn.addEventListener('click', exportHtml);
 
 // Initial render
 loadTheme();
