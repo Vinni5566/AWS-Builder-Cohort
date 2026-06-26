@@ -9,20 +9,50 @@
 </head>
 <body>
     <!-- Main container -->
-    <div class="container">
+    <div class="container" id="appContainer">
         <!-- Header section -->
         <header>
-            <h1>Markdown Clipboard</h1>
-            <p>Write, preview, and download Markdown</p>
-            <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
-                <span class="theme-icon">🌙</span>
-            </button>
+            <div class="header-left">
+                <h1>✦ Markdown Clipboard</h1>
+                <p>Write, preview, and download Markdown</p>
+            </div>
+            <div class="header-right">
+                <!-- Template picker dropdown -->
+                <div class="template-picker">
+                    <button id="templateBtn" class="btn btn-ghost" aria-haspopup="true">📄 Templates</button>
+                    <div id="templateMenu" class="template-menu" role="menu">
+                        <button class="template-item" data-template="readme">📦 README</button>
+                        <button class="template-item" data-template="blog">📝 Blog Post</button>
+                        <button class="template-item" data-template="api">🔌 API Docs</button>
+                        <button class="template-item" data-template="changelog">📋 Changelog</button>
+                        <button class="template-item" data-template="pr">🔀 Pull Request</button>
+                    </div>
+                </div>
+                <!-- Zen mode toggle -->
+                <button id="zenBtn" class="btn btn-ghost" title="Zen Mode (Ctrl+Shift+Z)" aria-label="Toggle zen mode">🧘 Zen</button>
+                <!-- Dark/light mode toggle -->
+                <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
         </header>
 
+        <!-- Find & Replace panel (hidden by default) -->
+        <div id="findReplaceBar" class="find-replace-bar" aria-hidden="true">
+            <div class="find-replace-inner">
+                <input id="findInput" type="text" placeholder="Find…" autocomplete="off">
+                <input id="replaceInput" type="text" placeholder="Replace with…" autocomplete="off">
+                <span id="matchCount" class="match-count">0 matches</span>
+                <button id="replaceOneBtn" class="btn btn-sm btn-secondary">Replace</button>
+                <button id="replaceAllBtn" class="btn btn-sm btn-primary">Replace All</button>
+                <button id="closeFindBar" class="btn-close-sm" aria-label="Close find bar">✕</button>
+            </div>
+        </div>
+
         <!-- Editor and preview panels -->
-        <div class="editor-container">
+        <div class="editor-container" id="editorContainer">
             <!-- Editor panel with textarea -->
-            <div class="editor-panel">
+            <div class="editor-panel" id="editorPanel">
                 <div class="panel-header">
                     <h2>Editor</h2>
                     <div class="header-actions">
@@ -32,31 +62,39 @@
                         <button id="downloadBtn" class="btn btn-primary">Download .md</button>
                     </div>
                 </div>
+                <!-- Markdown toolbar -->
                 <div class="toolbar">
-                    <button class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)">B</button>
-                    <button class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)">I</button>
+                    <button class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                    <button class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)"><i>I</i></button>
                     <button class="toolbar-btn" data-action="heading" title="Heading">H</button>
+                    <span class="toolbar-sep"></span>
                     <button class="toolbar-btn" data-action="link" title="Link">🔗</button>
                     <button class="toolbar-btn" data-action="image" title="Image">🖼️</button>
+                    <span class="toolbar-sep"></span>
                     <button class="toolbar-btn" data-action="code" title="Code">&lt;/&gt;</button>
                     <button class="toolbar-btn" data-action="blockquote" title="Blockquote">❝</button>
-                    <button class="toolbar-btn" data-action="list" title="List">≣</button>
+                    <button class="toolbar-btn" data-action="list" title="Unordered List">≣</button>
                     <button class="toolbar-btn" data-action="hr" title="Horizontal Rule">—</button>
+                    <span class="toolbar-sep"></span>
+                    <!-- Sync scroll toggle -->
+                    <button class="toolbar-btn toolbar-btn-toggle" id="syncScrollBtn" title="Sync Scroll" aria-pressed="true">⇅ Sync</button>
                 </div>
-                <textarea 
-                    id="markdownInput" 
-                    placeholder="Write or paste your Markdown here..."
+                <textarea
+                    id="markdownInput"
+                    placeholder="Write or paste your Markdown here... (Ctrl+F to find)"
                     spellcheck="false"
                 ></textarea>
+                <!-- Stats bar: chars, words, lines, read time -->
                 <div class="editor-stats">
                     <span id="charCount">0 chars</span>
                     <span id="wordCount">0 words</span>
                     <span id="lineCount">0 lines</span>
+                    <span id="readTime">~0 min read</span>
                 </div>
             </div>
 
             <!-- Preview panel -->
-            <div class="preview-panel">
+            <div class="preview-panel" id="previewPanel">
                 <div class="panel-header">
                     <h2>Preview</h2>
                     <div class="header-actions">
@@ -70,16 +108,16 @@
 
         <!-- Footer -->
         <footer>
-            <p>Built for AWS Builder Cohort - Week 2</p>
+            <p>Built for AWS Builder Cohort — Week 2 · S3 + CloudFront</p>
             <button id="shortcutsBtn" class="btn-link">⌨️ Shortcuts</button>
         </footer>
 
-        <!-- Shortcuts modal -->
-        <div id="shortcutsModal" class="modal">
+        <!-- Keyboard shortcuts modal -->
+        <div id="shortcutsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Keyboard Shortcuts</h3>
-                    <button id="closeModal" class="btn-close">&times;</button>
+                    <h3 id="modalTitle">Keyboard Shortcuts</h3>
+                    <button id="closeModal" class="btn-close" aria-label="Close modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="shortcut-item"><kbd>Ctrl/Cmd + B</kbd><span>Bold</span></div>
