@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>snip.dev — URL Shortener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">snip<span>.</span>dev</div>
+    <div class="tagline">// serverless url shortener · api gateway + lambda + dynamodb</div>
+  </header>
+
+  <!-- Main card -->
+  <div class="card" role="main">
+
+    <!-- Terminal title bar -->
+    <div class="titlebar" aria-hidden="true">
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
+      <span class="titlebar-label">POST /shorten</span>
+    </div>
+
+    <!-- Form -->
+    <div class="form-body">
+
+      <div class="field">
+        <label for="longUrl">Long URL</label>
+        <div class="input-wrap">
+          <input
+            type="url"
+            id="longUrl"
+            placeholder="https://example.com/very/long/path?with=params"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="customToken">Custom alias <span style="font-weight:400;color:var(--text-dim)">(optional)</span></label>
+        <div class="input-wrap">
+          <div class="prefix-row">
+            <span class="prefix" id="baseUrlDisplay">snip.dev/r/</span>
+            <input
+              type="text"
+              id="customToken"
+              placeholder="my-link"
+              maxlength="32"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="tokenHint"
+            />
+          </div>
+        </div>
+        <p class="hint" id="tokenHint">3–32 chars · letters, numbers, hyphens, underscores · leave blank to auto-generate</p>
+      </div>
+
+      <button class="btn" id="submitBtn" onclick="handleShorten()">
+        <span class="spinner" id="spinner" aria-hidden="true"></span>
+        <span id="btnLabel">Shorten →</span>
+      </button>
+
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" id="errorBanner" role="alert"></div>
+
+    <!-- Result -->
+    <div class="result" id="resultPanel" aria-live="polite">
+      <div class="result-header">
+        <span class="icon">✓</span>
+        SHORT LINK CREATED
+      </div>
+      <div class="result-body">
+        <div class="short-url" id="shortUrlDisplay"></div>
+        <div class="result-meta" id="resultMeta"></div>
+        <button class="copy-btn" id="copyBtn" onclick="copyShortUrl()">
+          <span id="copyIcon">⎘</span> Copy link
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- History -->
+  <div class="history-section">
+    <div class="section-label">// recent links (this session)</div>
+    <p class="history-empty" id="historyEmpty">No links created yet.</p>
+    <ul class="history-list" id="historyList" aria-label="Recent short links"></ul>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div>Week 3 · Serverless Compute &amp; Managed Databases</div>
+    <div class="stack-badges">
+      <span class="badge">AWS Lambda</span>
+      <span class="badge">API Gateway v2</span>
+      <span class="badge">DynamoDB</span>
+      <span class="badge">AWS CDK</span>
+      <span class="badge">Node 20</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+  // Replace with your deployed API Gateway endpoint after `cdk deploy`
+  const API_BASE = (window.API_BASE || "").replace(/\/$/, "");
+  // e.g. "https://abc123.execute-api.us-east-1.amazonaws.com/prod"
+  // For local dev / demo, set:   <script>window.API_BASE = "...";</scr ipt>  before this file.
+
+  const history = [];
+  let lastShortUrl = "";
+
+  // ── DOM refs ─────────────────────────────────────────────────────────────────
+  const longUrlInput    = document.getElementById("longUrl");
+  const tokenInput      = document.getElementById("customToken");
+  const submitBtn       = document.getElementById("submitBtn");
+  const spinner         = document.getElementById("spinner");
+  const btnLabel        = document.getElementById("btnLabel");
+  const errorBanner     = document.getElementById("errorBanner");
+  const resultPanel     = document.getElementById("resultPanel");
+  const shortUrlDisplay = document.getElementById("shortUrlDisplay");
+  const resultMeta      = document.getElementById("resultMeta");
+  const copyBtn         = document.getElementById("copyBtn");
+  const historyList     = document.getElementById("historyList");
+  const historyEmpty    = document.getElementById("historyEmpty");
+
+  // ── Enter key submits ─────────────────────────────────────────────────────────
+  [longUrlInput, tokenInput].forEach(el =>
+    el.addEventListener("keydown", e => { if (e.key === "Enter") handleShorten(); })
+  );
+
+  // ── Shorten ───────────────────────────────────────────────────────────────────
+  async function handleShorten() {
+    clearError();
+    hideResult();
+
+    const longUrl     = longUrlInput.value.trim();
+    const customToken = tokenInput.value.trim();
+
+    if (!longUrl) { return showError("Please enter a URL to shorten."); }
+    try { new URL(longUrl); } catch {
+      return showError("That doesn't look like a valid URL. Include http:// or https://.");
+    }
+    if (customToken && !/^[a-zA-Z0-9_-]{3,32}$/.test(customToken)) {
+      return showError("Alias must be 3–32 characters: letters, numbers, hyphens, or underscores.");
+    }
+
+    setLoading(true);
+
+    try {
+      if (!API_BASE) {
+        // ── Demo mode: simulate a response without a real backend ──────────────
+        await sleep(700);
+        const fakeToken = customToken || randomToken();
+        const fakeShort = `https://snip.dev/r/${fakeToken}`;
+        displayResult({ shortUrl: fakeShort, token: fakeToken, longUrl, createdAt: new Date().toISOString() });
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/shorten`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ longUrl, customToken: customToken || undefined }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || `Server error (${res.status})`);
+      }
+
+      displayResult(data);
+
+    } catch (err) {
+      showError(err.message || "Something went wrong. Check your API endpoint.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Display result ────────────────────────────────────────────────────────────
+  function displayResult({ shortUrl, token, longUrl, createdAt }) {
+    lastShortUrl = shortUrl;
+
+    shortUrlDisplay.innerHTML = `<a href="${shortUrl}" target="_blank" rel="noopener">${shortUrl}</a>`;
+
+    const longTrunc = longUrl.length > 60 ? longUrl.slice(0, 58) + "…" : longUrl;
+    resultMeta.innerHTML = `
+      <span class="meta-item">token: <strong>${token}</strong></span>
+      <span class="meta-item">created: <strong>${formatDate(createdAt)}</strong></span>
+      <span class="meta-item" title="${longUrl}">→ <strong>${longTrunc}</strong></span>
+    `;
+
+    copyBtn.textContent = "";
+    copyBtn.innerHTML = '<span id="copyIcon">⎘</span> Copy link';
+    copyBtn.classList.remove("copied");
+
+    resultPanel.classList.add("visible");
+    resultPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    // Add to session history
+    addToHistory({ shortUrl, token, longUrl });
+
+    // Reset inputs
+    longUrlInput.value = "";
+    tokenInput.value = "";
+    longUrlInput.focus();
+  }
+
+  // ── Copy ─────────────────────────────────────────────────────────────────────
+  async function copyShortUrl() {
+    if (!lastShortUrl) return;
+    try {
+      await navigator.clipboard.writeText(lastShortUrl);
+      copyBtn.innerHTML = '✓ Copied!';
+      copyBtn.classList.add("copied");
+      setTimeout(() => {
+        copyBtn.innerHTML = '<span id="copyIcon">⎘</span> Copy link';
+        copyBtn.classList.remove("copied");
+      }, 2000);
+    } catch {
+      copyBtn.textContent = "Select & copy manually";
+    }
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────────
+  function addToHistory({ shortUrl, token, longUrl }) {
+    history.unshift({ shortUrl, token, longUrl });
+    renderHistory();
+  }
+
+  function renderHistory() {
+    historyEmpty.style.display = history.length ? "none" : "block";
+    historyList.innerHTML = "";
+    history.forEach(({ shortUrl, token, longUrl }) => {
+      const li = document.createElement("li");
+      li.className = "history-item";
+      const longTrunc = longUrl.length > 55 ? longUrl.slice(0, 53) + "…" : longUrl;
+      li.innerHTML = `
+        <span class="history-token">${token}</span>
+        <span class="history-long" title="${longUrl}">${longTrunc}</span>
+        <button class="history-copy" onclick="copyText('${shortUrl}', this)">copy</button>
+      `;
+      historyList.appendChild(li);
+    });
+  }
+
+  async function copyText(text, btn) {
+    try {
+      await navigator.clipboard.writeText(text);
+      const orig = btn.textContent;
+      btn.textContent = "✓";
+      setTimeout(() => (btn.textContent = orig), 1500);
+    } catch {}
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    submitBtn.classList.toggle("loading", on);
+    btnLabel.textContent = on ? "Shortening…" : "Shorten →";
+  }
+
+  function showError(msg) {
+    errorBanner.textContent = `✗  ${msg}`;
+    errorBanner.classList.add("visible");
+  }
+  function clearError() { errorBanner.classList.remove("visible"); }
+  function hideResult()  { resultPanel.classList.remove("visible"); }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleString(undefined, {
+      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+    });
+  }
+
+  function randomToken(len = 7) {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
