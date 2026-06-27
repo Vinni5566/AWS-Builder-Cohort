@@ -12,12 +12,12 @@ Every folder in this repository represents an independent, fully deployable proj
 
 | Week | Project Module | Core AWS Services Used | Deployment Status |
 | :--- | :--- | :--- | :--- |
-| **Week 1** | [Cloud Builder Terminal Dashboard](./week1-terminal-dashboard) | AWS Amplify Hosting, IAM | 🟢 Live |
-| **Week 2** | [Developer's Markdown Clipboard](./week2-markdown-clipboard) | Amazon S3, Amazon CloudFront | 🟢 Live |
-| **Week 3** | [Smart Serverless URL Shortener](./week3-url-shortener) | AWS Lambda, API Gateway, DynamoDB | 🟢 Live |
-| **Week 4** | [Real-Time Collab Chat Container](./week4-collab-chat) | Amazon ECS, AWS Fargate, Amazon ECR | 🟢 Live |
-| **Week 5** | [Multilingual AI Audio Transcriber](./week5-ai-transcriber) | Amazon Transcribe, Amazon Translate, S3, Lambda | 🟢 Live |
-| **Week 6** | [Automated Cloud Health Alert Bot](./week6-cloud-health-bot) | Amazon EventBridge, AWS Lambda, Amazon SNS | 🟢 Live |
+| **Week 1** | [Cloud Builder Terminal Dashboard](./week1-terminal-dashboard) | AWS Amplify Hosting, IAM | 🔗 |
+| **Week 2** | [Developer's Markdown Clipboard](./week2-markdown-clipboard) | Amazon S3, Amazon CloudFront | https://markdown-clip.netlify.app/ |
+| **Week 3** | [Smart Serverless URL Shortener](./week3-url-shortener) | AWS Lambda, API Gateway, DynamoDB | 🔗|
+| **Week 4** | [Real-Time Collab Chat Container](./week4-collab-chat) | Amazon ECS, AWS Fargate, Amazon ECR | 🔗 |
+| **Week 5** | [Multilingual AI Audio Transcriber](./week5-ai-transcriber) | Amazon Transcribe, Amazon Translate, S3, Lambda | 🔗 |
+| **Week 6** | [Automated Cloud Health Alert Bot](./week6-cloud-health-bot) | Amazon EventBridge, AWS Lambda, Amazon SNS | 🔗 |
 
 ---
 
