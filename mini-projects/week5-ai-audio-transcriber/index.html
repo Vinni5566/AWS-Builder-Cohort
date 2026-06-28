@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>transcriber — week 5 · ai/ml cloud services</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="wordmark">
+      <h1>voice<em>script</em></h1>
+      <span class="week-badge">Week 5 · AWS AI/ML</span>
+    </div>
+    <p class="subtitle">
+      Drop an audio file. AWS transcribes the speech, then translates it
+      into your chosen languages — automatically.
+    </p>
+    <div class="pipeline">
+      <div class="pipeline-step"><span class="icon">📂</span> S3 Upload</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step"><span class="icon">⚡</span> Lambda</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step"><span class="icon">🎙️</span> Transcribe</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step"><span class="icon">🌐</span> Translate</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step"><span class="icon">✓</span> Result</div>
+    </div>
+  </header>
+
+  <!-- CONFIG (collapsed by default) -->
+  <details class="config-panel" id="config-panel">
+    <summary>AWS endpoint configuration</summary>
+    <div class="config-grid">
+      <div class="config-field">
+        <label>API Gateway URL</label>
+        <input type="text" id="api-url" placeholder="https://xxxx.execute-api.ap-south-1.amazonaws.com/prod" />
+      </div>
+      <div class="config-field">
+        <label>S3 Bucket Name</label>
+        <input type="text" id="bucket-name" placeholder="my-transcriber-bucket" />
+      </div>
+    </div>
+  </details>
+
+  <!-- LANGUAGE SELECTION -->
+  <div class="lang-row">
+    <label>Source</label>
+    <select id="source-lang">
+      <option value="en-US">English (US)</option>
+      <option value="en-GB">English (UK)</option>
+      <option value="hi-IN">Hindi</option>
+      <option value="fr-FR">French</option>
+      <option value="de-DE">German</option>
+      <option value="es-ES">Spanish</option>
+      <option value="ja-JP">Japanese</option>
+      <option value="zh-CN">Chinese (Mandarin)</option>
+      <option value="ar-SA">Arabic</option>
+      <option value="pt-BR">Portuguese (BR)</option>
+    </select>
+    <label style="margin-left:8px">Translate to</label>
+    <div class="lang-chips" id="lang-chips">
+      <div class="lang-chip active" data-lang="hi">Hindi</div>
+      <div class="lang-chip active" data-lang="fr">French</div>
+      <div class="lang-chip active" data-lang="es">Spanish</div>
+      <div class="lang-chip active" data-lang="de">German</div>
+      <div class="lang-chip" data-lang="ja">Japanese</div>
+      <div class="lang-chip" data-lang="zh">Chinese</div>
+      <div class="lang-chip" data-lang="ar">Arabic</div>
+      <div class="lang-chip" data-lang="pt">Portuguese</div>
+    </div>
+  </div>
+
+  <!-- DROP ZONE -->
+  <div id="drop-zone">
+    <div class="drop-icon">🎙️</div>
+    <div class="drop-title">Drop your audio file here</div>
+    <p class="drop-sub">or click to browse from your device</p>
+    <button class="drop-btn" onclick="document.getElementById('file-input').click()">
+      Choose file
+    </button>
+    <p class="drop-formats">MP3 · WAV · FLAC · M4A · OGG · WEBM · up to 500 MB</p>
+    <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg,.webm" />
+  </div>
+
+  <!-- ACTIVE JOB STATUS -->
+  <div id="active-job">
+    <div class="job-header">
+      <div class="waveform" id="waveform">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="job-info">
+        <div class="job-filename" id="job-filename">audio.mp3</div>
+        <div class="job-status" id="job-status">Uploading…</div>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results"></div>
+
+  <!-- EMPTY STATE -->
+  <div id="empty-state">
+    <p>Your transcripts will appear here.</p>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── config ──────────────────────────────────────────────────
+// In production these come from the config panel or env-injected at build time.
+// In demo mode (no API URL), we use mock data to show the UI.
+let API_URL    = "";
+let DEMO_MODE  = true;
+
+const LANG_NAMES = {
+  hi: "Hindi", fr: "French", es: "Spanish", de: "German",
+  ja: "Japanese", zh: "Chinese", ar: "Arabic", pt: "Portuguese",
+  en: "English",
+};
+
+// ── state ───────────────────────────────────────────────────
+let activeTargetLangs = ["hi", "fr", "es", "de"];
+let results = []; // array of result objects
+
+// ── dom refs ────────────────────────────────────────────────
+const dropZone     = document.getElementById("drop-zone");
+const fileInput    = document.getElementById("file-input");
+const activeJob    = document.getElementById("active-job");
+const waveform     = document.getElementById("waveform");
+const jobFilename  = document.getElementById("job-filename");
+const jobStatus    = document.getElementById("job-status");
+const progressFill = document.getElementById("progress-fill");
+const resultsEl    = document.getElementById("results");
+const emptyState   = document.getElementById("empty-state");
+const apiUrlInput  = document.getElementById("api-url");
+const bucketInput  = document.getElementById("bucket-name");
+const toast        = document.getElementById("toast");
+
+// ── lang chips ───────────────────────────────────────────────
+document.querySelectorAll(".lang-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    chip.classList.toggle("active");
+    const lang = chip.dataset.lang;
+    if (chip.classList.contains("active")) {
+      if (!activeTargetLangs.includes(lang)) activeTargetLangs.push(lang);
+    } else {
+      activeTargetLangs = activeTargetLangs.filter(l => l !== lang);
+    }
+  });
+});
+
+// ── config inputs ────────────────────────────────────────────
+apiUrlInput.addEventListener("change", () => {
+  API_URL   = apiUrlInput.value.trim().replace(/\/$/, "");
+  DEMO_MODE = !API_URL;
+});
+
+// ── drop zone events ─────────────────────────────────────────
+dropZone.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+["dragleave", "dragend"].forEach(ev =>
+  dropZone.addEventListener(ev, () => dropZone.classList.remove("dragover"))
+);
+
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+fileInput.addEventListener("change", () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  fileInput.value = "";
+});
+
+// ── helpers ──────────────────────────────────────────────────
+function showToast(msg, duration = 2500) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), duration);
+}
+
+function setProgress(pct) {
+  progressFill.style.width = pct + "%";
+}
+
+function setStatus(text) {
+  jobStatus.innerHTML = text;
+}
+
+function startJob(filename) {
+  jobFilename.textContent = filename;
+  setStatus("Uploading to S3…");
+  setProgress(5);
+  activeJob.classList.add("visible");
+  waveform.classList.remove("idle");
+  emptyState.style.display = "none";
+}
+
+function finishJob() {
+  waveform.classList.add("idle");
+  setProgress(100);
+  setStatus('<strong>Done</strong> — transcript ready');
+  setTimeout(() => {
+    activeJob.classList.remove("visible");
+    setProgress(0);
+  }, 2500);
+}
+
+function appendResult(data) {
+  const card = document.createElement("div");
+  card.className = "result-card";
+
+  const wordsHtml = data.words?.length
+    ? data.words.map(w => {
+        const cls = w.confidence > 0.9 ? "word-high"
+                  : w.confidence > 0.7 ? "word-medium"
+                  : "word-low";
+        return `<span class="${cls}" title="${(w.confidence * 100).toFixed(0)}% confidence">${escHtml(w.word)}</span>`;
+      }).join(" ")
+    : escHtml(data.transcript);
+
+  const translationsHtml = Object.entries(data.translations || {})
+    .filter(([, v]) => v)
+    .map(([code, text]) => `
+      <div class="translation-item">
+        <div class="translation-lang">${LANG_NAMES[code] || code}</div>
+        <div class="translation-text">${escHtml(text)}</div>
+      </div>
+    `).join("");
+
+  card.innerHTML = `
+    <div class="result-card-header">
+      <span class="result-file">${escHtml(data.filename || data.sourceFile || "audio")}</span>
+      <span class="result-success">✓ transcribed</span>
+    </div>
+    <div class="transcript-block">
+      <div class="block-label">
+        Transcript · ${data.sourceLanguage || "en-US"}
+        <button class="copy-btn" onclick="copyText(this, ${JSON.stringify(data.transcript)})">copy</button>
+      </div>
+      <div class="transcript-text">${wordsHtml}</div>
+    </div>
+    ${translationsHtml ? `<div class="translations-grid">${translationsHtml}</div>` : ""}
+  `;
+
+  resultsEl.prepend(card);
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "copied!";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = "copy";
+      btn.classList.remove("copied");
+    }, 2000);
+  });
+}
+
+function escHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// ── demo mock (no AWS config) ─────────────────────────────
+async function runDemo(file) {
+  startJob(file.name);
+
+  await delay(800);  setProgress(20); setStatus("Uploading to S3…");
+  await delay(800);  setProgress(40); setStatus("Lambda triggered — starting <strong>Transcribe</strong> job…");
+  await delay(1200); setProgress(60); setStatus("Amazon Transcribe processing audio…");
+  await delay(1500); setProgress(80); setStatus("Amazon Translate running…");
+  await delay(800);  setProgress(95); setStatus("Writing results…");
+  await delay(400);
+
+  const demo = {
+    filename: file.name,
+    sourceFile: file.name,
+    sourceLanguage: document.getElementById("source-lang").value,
+    transcript: "The quick brown fox jumps over the lazy dog. This is a demo transcript generated because no AWS endpoint is configured. Connect your API Gateway URL above to use real speech-to-text transcription.",
+    words: [
+      { word: "The",         confidence: 0.99, start: 0.0, end: 0.2 },
+      { word: "quick",       confidence: 0.97, start: 0.2, end: 0.5 },
+      { word: "brown",       confidence: 0.95, start: 0.5, end: 0.8 },
+      { word: "fox",         confidence: 0.99, start: 0.8, end: 1.1 },
+      { word: "jumps",       confidence: 0.93, start: 1.1, end: 1.4 },
+      { word: "over",        confidence: 0.98, start: 1.4, end: 1.7 },
+      { word: "the",         confidence: 0.99, start: 1.7, end: 1.9 },
+      { word: "lazy",        confidence: 0.88, start: 1.9, end: 2.2 },
+      { word: "dog",         confidence: 0.96, start: 2.2, end: 2.5 },
+      { word: "Connect",     confidence: 0.72, start: 3.0, end: 3.4 },
+      { word: "your",        confidence: 0.65, start: 3.4, end: 3.6 },
+      { word: "API",         confidence: 0.61, start: 3.6, end: 3.9 },
+    ],
+    translations: {
+      hi: "त्वरित भूरी लोमड़ी आलसी कुत्ते के ऊपर कूदती है। यह एक डेमो ट्रांस्क्रिप्ट है।",
+      fr: "Le renard brun rapide saute par-dessus le chien paresseux. Ceci est une transcription de démonstration.",
+      es: "El rápido zorro marrón salta sobre el perro perezoso. Esta es una transcripción de demostración.",
+      de: "Der schnelle braune Fuchs springt über den faulen Hund. Dies ist eine Demo-Transkription.",
+    },
+  };
+
+  // Filter to active target langs
+  const filtered = {};
+  activeTargetLangs.forEach(l => { if (demo.translations[l]) filtered[l] = demo.translations[l]; });
+  demo.translations = filtered;
+
+  finishJob();
+  appendResult(demo);
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── real AWS pipeline ──────────────────────────────────────
+async function runReal(file) {
+  startJob(file.name);
+
+  try {
+    // 1. Get presigned upload URL from API
+    setStatus("Requesting upload URL…");
+    const urlRes = await fetch(`${API_URL}/upload-url`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type || "audio/mpeg",
+        targetLanguages: activeTargetLangs.join(","),
+        sourceLanguage: document.getElementById("source-lang").value,
+      }),
+    });
+
+    if (!urlRes.ok) throw new Error(`Upload URL request failed: ${urlRes.status}`);
+    const { uploadUrl, key, jobName } = await urlRes.json();
+
+    // 2. PUT directly to S3 via presigned URL
+    setStatus("Uploading to S3…"); setProgress(15);
+    const uploadRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "audio/mpeg" },
+      body: file,
+    });
+    if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.status}`);
+
+    setProgress(30);
+    setStatus("Lambda triggered — Amazon <strong>Transcribe</strong> running…");
+
+    // 3. Poll for result (Lambda writes JSON to S3, API exposes GET /result/:jobName)
+    let result = null;
+    const pollStart = Date.now();
+    const maxWait   = 10 * 60 * 1000; // 10 min
+
+    while (!result && Date.now() - pollStart < maxWait) {
+      await delay(5000);
+      const elapsed = Math.round((Date.now() - pollStart) / 1000);
+      setStatus(`Processing… ${elapsed}s elapsed`);
+      // Slowly advance progress bar from 30→90 over the wait period
+      const pct = 30 + Math.min(60, (elapsed / 120) * 60);
+      setProgress(pct);
+
+      const res = await fetch(`${API_URL}/result/${encodeURIComponent(jobName)}`);
+      if (res.ok) {
+        result = await res.json();
+      } else if (res.status !== 404) {
+        throw new Error(`Poll error: ${res.status}`);
+      }
+    }
+
+    if (!result) throw new Error("Transcription timed out after 10 minutes.");
+
+    // Add filename for display
+    result.filename = file.name;
+    // Filter translations to active langs
+    const filtered = {};
+    activeTargetLangs.forEach(l => { if (result.translations?.[l]) filtered[l] = result.translations[l]; });
+    result.translations = filtered;
+
+    setStatus("Amazon <strong>Translate</strong> complete — writing results…");
+    setProgress(95);
+    await delay(400);
+
+    finishJob();
+    appendResult(result);
+    showToast("Transcript ready");
+
+  } catch (err) {
+    waveform.classList.add("idle");
+    setStatus(`<span style="color:var(--accent)">Error: ${escHtml(err.message)}</span>`);
+    setProgress(0);
+    showToast("Something went wrong — check console", 4000);
+    console.error(err);
+  }
+}
+
+// ── entry point ────────────────────────────────────────────
+async function handleFile(file) {
+  const ALLOWED = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/flac",
+                   "audio/ogg", "audio/webm", "audio/mp4", "audio/x-m4a",
+                   "audio/aac", "audio/x-wav", "audio/x-flac", "video/webm"];
+  const ext = file.name.split(".").pop().toLowerCase();
+  const okExt = ["mp3","wav","flac","m4a","ogg","webm","mp4"].includes(ext);
+
+  if (!ALLOWED.includes(file.type) && !okExt) {
+    showToast("Please upload an audio file (MP3, WAV, FLAC, M4A, OGG…)");
+    return;
+  }
+
+  API_URL   = apiUrlInput.value.trim().replace(/\/$/, "");
+  DEMO_MODE = !API_URL;
+
+  if (DEMO_MODE) {
+    showToast("Demo mode — configure API URL above for live AWS processing", 3500);
+    await runDemo(file);
+  } else {
+    await runReal(file);
+  }
+}
+</script>
+</body>
+</html>

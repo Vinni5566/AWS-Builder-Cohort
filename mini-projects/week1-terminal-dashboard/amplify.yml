@@ -1,0 +1,16 @@
+version: 1
+frontend:
+  phases:
+    # No build step needed — pure static HTML/CSS/JS
+    build:
+      commands:
+        - echo "Static site — no build required"
+  artifacts:
+    # The root of the repo IS the deployable site
+    baseDirectory: /
+    files:
+      - index.html
+      - styles.css
+      - app.js
+  cache:
+    paths: []

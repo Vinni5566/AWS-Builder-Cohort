@@ -1,0 +1,12 @@
+{
+  "name": "week5-ai-transcriber-lambda",
+  "version": "1.0.0",
+  "description": "S3 → Transcribe → Translate Lambda handler",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/client-transcribe": "^3.600.0",
+    "@aws-sdk/client-translate": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0"
+  }
+}

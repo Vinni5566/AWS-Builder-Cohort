@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>~/cloud-projects — terminal dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ── Boot sequence overlay ──────────────────────────────────── -->
+<div id="boot-screen" aria-hidden="true">
+  <div class="boot-line" id="b0">BIOS v2.4.1 — Cloud Projects Runtime</div>
+  <div class="boot-line" id="b1">Checking memory... <span class="ok">OK</span></div>
+  <div class="boot-line" id="b2">Loading IAM credentials... <span class="ok">OK</span></div>
+  <div class="boot-line" id="b3">Mounting S3 volumes... <span class="ok">OK</span></div>
+  <div class="boot-line" id="b4">Starting Amplify runtime... <span class="ok">OK</span></div>
+  <div class="boot-line" id="b5">Connecting to GitHub remote... <span class="ok">OK</span></div>
+  <div class="boot-line" id="b6">&nbsp;</div>
+  <div class="boot-line" id="b7">All systems <span class="ok">nominal</span>. Launching dashboard.</div>
+</div>
+
+<!-- ── Main shell ──────────────────────────────────────────────── -->
+<div class="shell" id="main-shell" style="opacity:0">
+
+  <!-- Terminal window -->
+  <div class="window" role="main">
+
+    <!-- Title bar -->
+    <div class="titlebar" aria-hidden="true">
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
+      <span class="titlebar-path">
+        <span>user@cloud-lab</span>:~/cloud-projects
+      </span>
+    </div>
+
+    <!-- Terminal body -->
+    <div class="term-body">
+
+      <!-- Command that "ran" -->
+      <div class="prompt-row" aria-label="Command: ls -la">
+        <span class="prompt-user">user</span>
+        <span class="prompt-at">@</span>
+        <span class="prompt-host">cloud-lab</span>
+        <span class="prompt-colon">:</span>
+        <span class="prompt-path">~/cloud-projects</span>
+        <span class="prompt-sym">$</span>
+        <span class="prompt-cmd">ls -la</span>
+      </div>
+
+      <!-- Column headers -->
+      <div class="ls-header" aria-hidden="true">
+        <span>permissions</span>
+        <span style="text-align:right">week</span>
+        <span class="h-size" style="text-align:right">size</span>
+        <span class="h-date">modified</span>
+        <span>project</span>
+      </div>
+
+      <!-- Project list -->
+      <ul class="project-list" role="list" aria-label="Weekly projects">
+
+        <li>
+          <a class="project-row" href="#" role="listitem"
+             aria-label="Week 1: Terminal Dashboard — current project">
+            <span class="col-perms">drwxr-xr-x</span>
+            <span class="col-week">w01</span>
+            <span class="col-size">4.2K</span>
+            <span class="col-date">Jun 28 2025</span>
+            <span class="col-name">
+              week1-terminal-dashboard/
+              <span class="badge current">current</span>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="project-row" href="https://YOUR_WEEK2_URL" target="_blank" rel="noopener" role="listitem"
+             aria-label="Week 2: Static Site — live">
+            <span class="col-perms">drwxr-xr-x</span>
+            <span class="col-week">w02</span>
+            <span class="col-size">8.7K</span>
+            <span class="col-date">Jun 28 2025</span>
+            <span class="col-name">
+              week2-static-site/
+              <span class="badge soon">soon</span>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="project-row" href="https://YOUR_WEEK3_URL" target="_blank" rel="noopener" role="listitem"
+             aria-label="Week 3: URL Shortener — live">
+            <span class="col-perms">drwxr-xr-x</span>
+            <span class="col-week">w03</span>
+            <span class="col-size">24.1K</span>
+            <span class="col-date">Jun 28 2025</span>
+            <span class="col-name">
+              week3-url-shortener/
+              <span class="badge live">live</span>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="project-row pending" href="#" tabindex="-1" aria-hidden="true">
+            <span class="col-perms">drwx------</span>
+            <span class="col-week">w04</span>
+            <span class="col-size">—</span>
+            <span class="col-date">— — ——</span>
+            <span class="col-name">
+              week4-[pending]/
+              <span class="badge soon">soon</span>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="project-row pending" href="#" tabindex="-1" aria-hidden="true">
+            <span class="col-perms">drwx------</span>
+            <span class="col-week">w05</span>
+            <span class="col-size">—</span>
+            <span class="col-date">— — ——</span>
+            <span class="col-name">
+              week5-[pending]/
+              <span class="badge soon">soon</span>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="project-row pending" href="#" tabindex="-1" aria-hidden="true">
+            <span class="col-perms">drwx------</span>
+            <span class="col-week">w06</span>
+            <span class="col-size">—</span>
+            <span class="col-date">— — ——</span>
+            <span class="col-name">
+              week6-[pending]/
+              <span class="badge soon">soon</span>
+            </span>
+          </a>
+        </li>
+
+      </ul>
+
+      <!-- ls footer line -->
+      <div class="ls-footer" aria-label="Directory summary">
+        6 entries &nbsp;·&nbsp; 1 active &nbsp;·&nbsp; 2 live &nbsp;·&nbsp; 3 pending
+      </div>
+
+      <!-- Idle prompt with blinking cursor -->
+      <div class="prompt-idle" aria-label="Ready for input">
+        <span class="prompt-user">user</span>
+        <span class="prompt-at">@</span>
+        <span class="prompt-host">cloud-lab</span>
+        <span class="prompt-colon">:</span>
+        <span class="prompt-path">~/cloud-projects</span>
+        <span class="prompt-sym">$</span>
+        <span class="cursor" aria-hidden="true"></span>
+      </div>
+
+    </div><!-- /term-body -->
+  </div><!-- /window -->
+
+  <!-- ── Info panel ─────────────────────────────────────────── -->
+  <div class="info-panel">
+
+    <div class="info-card">
+      <div class="info-card-label">// environment</div>
+      <div class="info-card-body">
+        <div><span class="key">host&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="val">AWS Amplify</span></div>
+        <div><span class="key">branch&nbsp;&nbsp;&nbsp;</span><span class="val">main</span></div>
+        <div><span class="key">ci/cd&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="val">GitHub → Amplify</span></div>
+        <div><span class="key">iam user&nbsp;</span><span class="val">cloud-lab-deployer</span></div>
+        <div><span class="key">region&nbsp;&nbsp;&nbsp;</span><span class="val">us-east-1</span></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-label">// stack</div>
+      <div class="info-card-body">
+        <div><span class="key">w01&nbsp;</span><span class="acc">Amplify · static HTML</span></div>
+        <div><span class="key">w02&nbsp;</span><span class="val">S3 · CloudFront</span></div>
+        <div><span class="key">w03&nbsp;</span><span class="acc">Lambda · API GW · DynamoDB</span></div>
+        <div><span class="key">w04&nbsp;</span><span class="val">ECS · Fargate · ECR</span></div>
+        <div><span class="key">w05&nbsp;</span><span class="val">RDS · VPC · Secrets Mgr</span></div>
+        <div><span class="key">w06&nbsp;</span><span class="val">CDK · multi-stack IaC</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Footer ─────────────────────────────────────────────── -->
+  <footer>
+    <span>cloud-lab capstone · NITI Aayog internship 2025</span>
+    <span class="right" id="uptime-display">uptime: calculating...</span>
+  </footer>
+
+</div><!-- /shell -->
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>collab-chat // engineering workspace</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── LOGIN OVERLAY ─────────────────────────────────────── -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="logo">
+      <div class="icon">⬡</div>
+      <div>
+        <h1>collab-chat</h1>
+        <span>engineering workspace</span>
+      </div>
+    </div>
+
+    <label for="username-input">Handle</label>
+    <input
+      id="username-input"
+      type="text"
+      placeholder="your_handle"
+      maxlength="20"
+      autocomplete="off"
+      spellcheck="false"
+    />
+
+    <label for="room-select">Join room</label>
+    <select id="room-select">
+      <option value="general">#general</option>
+      <option value="engineering">#engineering</option>
+      <option value="devops">#devops</option>
+      <option value="random">#random</option>
+    </select>
+
+    <button id="join-btn">connect →</button>
+    <p class="login-hint">WebSocket · multi-room · real-time</p>
+  </div>
+</div>
+
+<!-- ── APP ───────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="dot"></div>
+      <span class="workspace">engineering-ws</span>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Channels</div>
+      <div id="room-list"></div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label users-label">In this room</div>
+      <div id="user-list"></div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="my-avatar" id="my-avatar">?</div>
+      <div class="my-info">
+        <div class="my-name" id="my-name">–</div>
+        <div class="my-status">● online</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div class="chat-header">
+      <div class="room-title">
+        <span id="header-room">#general</span>
+        <span class="cursor-blink"></span>
+      </div>
+      <div class="header-sep"></div>
+      <div class="room-desc" id="header-desc">Team-wide announcements</div>
+    </div>
+
+    <div id="messages"></div>
+
+    <div id="typing-indicator"></div>
+
+    <div id="input-area">
+      <div class="input-wrapper">
+        <span class="input-prompt">&gt;</span>
+        <input
+          id="msg-input"
+          type="text"
+          placeholder="send a message..."
+          maxlength="1000"
+          autocomplete="off"
+          spellcheck="false"
+          disabled
+        />
+        <button id="send-btn" title="Send (Enter)">↑</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- STATUS TOAST -->
+<div id="conn-status"></div>
+
+<script>
+// ── state ──────────────────────────────────────────────────
+let ws = null;
+let myUsername = "";
+let myColor = "";
+let currentRoom = "general";
+let typingTimer = null;
+let typingUsers = {};
+
+const ROOM_DESCS = {
+  general:     "Team-wide announcements",
+  engineering: "Code reviews & PRs",
+  devops:      "Infra, CI/CD, deployments",
+  random:      "Off-topic & memes",
+};
+
+// ── dom refs ───────────────────────────────────────────────
+const loginOverlay = document.getElementById("login-overlay");
+const app          = document.getElementById("app");
+const joinBtn      = document.getElementById("join-btn");
+const usernameInput= document.getElementById("username-input");
+const roomSelect   = document.getElementById("room-select");
+const messagesEl   = document.getElementById("messages");
+const msgInput     = document.getElementById("msg-input");
+const sendBtn      = document.getElementById("send-btn");
+const roomList     = document.getElementById("room-list");
+const userList     = document.getElementById("user-list");
+const headerRoom   = document.getElementById("header-room");
+const headerDesc   = document.getElementById("header-desc");
+const myAvatarEl   = document.getElementById("my-avatar");
+const myNameEl     = document.getElementById("my-name");
+const typingEl     = document.getElementById("typing-indicator");
+const connStatus   = document.getElementById("conn-status");
+
+// ── helpers ────────────────────────────────────────────────
+function ts(epoch) {
+  return new Date(epoch).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function initial(name) {
+  return (name || "?")[0].toUpperCase();
+}
+
+function showStatus(text, type = "") {
+  connStatus.textContent = text;
+  connStatus.className = "show " + type;
+  clearTimeout(connStatus._t);
+  if (type === "ok") {
+    connStatus._t = setTimeout(() => connStatus.classList.remove("show"), 2000);
+  }
+}
+
+function hideStatus() {
+  connStatus.classList.remove("show");
+}
+
+// ── render rooms ───────────────────────────────────────────
+function renderRooms(rooms) {
+  roomList.innerHTML = "";
+  rooms.forEach(r => {
+    const div = document.createElement("div");
+    div.className = "room-item" + (r.name === currentRoom ? " active" : "");
+    div.dataset.room = r.name;
+    div.innerHTML = `
+      <span class="room-name">
+        <span style="color:var(--text-dim)">#</span>
+        <span>${r.name}</span>
+      </span>
+      <span class="room-count">${r.count}</span>
+    `;
+    div.addEventListener("click", () => switchRoom(r.name));
+    roomList.appendChild(div);
+  });
+}
+
+// ── render users ───────────────────────────────────────────
+function renderUsers(users) {
+  userList.innerHTML = "";
+  users.forEach(u => {
+    const div = document.createElement("div");
+    div.className = "user-item";
+    div.innerHTML = `
+      <div class="user-dot" style="background:${u.color};box-shadow:0 0 4px ${u.color}"></div>
+      <span class="user-name">${u.username}</span>
+    `;
+    userList.appendChild(div);
+  });
+}
+
+// ── append message ─────────────────────────────────────────
+function appendMessage(data) {
+  const div = document.createElement("div");
+  div.className = "msg" + (data.self ? " self" : "") + " flash";
+  div.innerHTML = `
+    <div class="msg-avatar" style="background:${data.color}">${initial(data.username)}</div>
+    <div class="msg-body">
+      <div class="msg-meta">
+        <span class="msg-user" style="color:${data.color}">${data.username}</span>
+        <span class="msg-time">${ts(data.ts)}</span>
+      </div>
+      <div class="msg-text">${escHtml(data.text)}</div>
+    </div>
+  `;
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
+function appendSystem(text) {
+  const div = document.createElement("div");
+  div.className = "msg-system";
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
+function escHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function scrollToBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// ── typing indicator ───────────────────────────────────────
+function updateTyping() {
+  const names = Object.keys(typingUsers);
+  if (!names.length) {
+    typingEl.innerHTML = "";
+    return;
+  }
+  const label = names.length === 1
+    ? `${names[0]} is typing`
+    : `${names.slice(0, 2).join(", ")} are typing`;
+
+  typingEl.innerHTML = `
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+    <span>${label}</span>
+  `;
+}
+
+// ── switch room ────────────────────────────────────────────
+function switchRoom(room) {
+  if (room === currentRoom || !ws) return;
+  ws.send(JSON.stringify({ type: "switch_room", room }));
+}
+
+// ── websocket ──────────────────────────────────────────────
+function connect(username, room) {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(`${proto}://${location.host}`);
+
+  showStatus("connecting…");
+
+  ws.addEventListener("open", () => {
+    ws.send(JSON.stringify({ type: "join", username, room }));
+  });
+
+  ws.addEventListener("message", (e) => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === "init") {
+      myUsername = msg.username;
+      myColor    = msg.color;
+      currentRoom= msg.room;
+
+      myAvatarEl.textContent = initial(myUsername);
+      myAvatarEl.style.background = myColor;
+      myNameEl.textContent = myUsername;
+
+      headerRoom.textContent = "#" + currentRoom;
+      headerDesc.textContent = ROOM_DESCS[currentRoom] || "";
+
+      renderRooms(msg.rooms);
+      renderUsers(msg.users);
+
+      msgInput.disabled = false;
+      msgInput.focus();
+      showStatus("connected", "ok");
+      return;
+    }
+
+    if (msg.type === "rooms_update") {
+      renderRooms(msg.rooms);
+      return;
+    }
+
+    if (msg.type === "room_switched") {
+      currentRoom = msg.room;
+      headerRoom.textContent = "#" + currentRoom;
+      headerDesc.textContent = ROOM_DESCS[currentRoom] || "";
+      messagesEl.innerHTML = "";
+      typingUsers = {};
+      updateTyping();
+      renderUsers(msg.users);
+
+      // update active state
+      document.querySelectorAll(".room-item").forEach(el => {
+        el.classList.toggle("active", el.dataset.room === currentRoom);
+      });
+      return;
+    }
+
+    if (msg.type === "message") {
+      // clear sender from typing
+      delete typingUsers[msg.username];
+      updateTyping();
+      appendMessage(msg);
+      return;
+    }
+
+    if (msg.type === "system") {
+      appendSystem(msg.text);
+      // refresh users on join/leave
+      return;
+    }
+
+    if (msg.type === "typing") {
+      if (msg.username === myUsername) return;
+      typingUsers[msg.username] = true;
+      updateTyping();
+      // auto-clear after 3s
+      clearTimeout(typingUsers[`_t_${msg.username}`]);
+      typingUsers[`_t_${msg.username}`] = setTimeout(() => {
+        delete typingUsers[msg.username];
+        delete typingUsers[`_t_${msg.username}`];
+        updateTyping();
+      }, 3000);
+      return;
+    }
+  });
+
+  ws.addEventListener("close", () => {
+    msgInput.disabled = true;
+    showStatus("disconnected — refresh to reconnect", "error");
+  });
+
+  ws.addEventListener("error", () => {
+    showStatus("connection error", "error");
+  });
+}
+
+// ── send message ───────────────────────────────────────────
+function sendMessage() {
+  const text = msgInput.value.trim();
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: "message", text }));
+  msgInput.value = "";
+}
+
+// ── events ─────────────────────────────────────────────────
+joinBtn.addEventListener("click", () => {
+  const username = usernameInput.value.trim() || "anon";
+  const room = roomSelect.value;
+  loginOverlay.style.display = "none";
+  app.classList.add("visible");
+  connect(username, room);
+});
+
+usernameInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") joinBtn.click();
+});
+
+msgInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+msgInput.addEventListener("input", () => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: "typing" }));
+});
+
+sendBtn.addEventListener("click", sendMessage);
+</script>
+</body>
+</html>
